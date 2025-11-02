@@ -1,58 +1,40 @@
-import { Elysia, t } from "elysia";
-import { VehicleRepositoryAdapter } from "./infra/database/vehicle-repository.adapter";
-import { VehicleService } from "./service/vehicle-service";
-
-const repository = new VehicleRepositoryAdapter();
-const service = new VehicleService(repository);
-
-const vehicleRequest = t.Object({
-  id: t.String(),
-  make: t.String({ format: "email" }),
-  model: t.String(),
-  year: t.Number(),
-  vin: t.String(),
-  color: t.String(),
-  price: t.Number(),
-  isSold: t.Boolean(),
-});
+import { Elysia } from "elysia";
+import { openapi } from "@elysiajs/openapi";
+import { VehicleController } from "./application/controller/vehicle-controller";
+import { errorHandler } from "./application/middlewares/error-handler";
 
 const app = new Elysia()
-  .put(
-    "/vehicles/:id",
-    ({ params, body }) => {
-      const { id } = params;
-      return service.updateVehicle(id, body);
-    },
-    {
-      body: vehicleRequest,
-    }
+  .use(errorHandler)
+  .use(
+    openapi({
+      documentation: {
+        info: {
+          title: "Dealership Vehicle Management API",
+          version: "1.0.0",
+          description: "API for managing vehicles in a dealership system.",
+        },
+        tags: [
+          {
+            name: "Health",
+            description: "Health check endpoints",
+          },
+          {
+            name: "Vehicles",
+            description: "Endpoints for managing vehicles",
+          },
+        ],
+      },
+    })
   )
-  .post(
-    "/vehicles",
-    ({ body }) => {
-      return service.createVehicle(body);
+  .get("/health", () => "ok", {
+    detail: {
+      tags: ["Health"],
+      summary: "Health check",
+      description: "Returns 'ok' if the service is running",
     },
-    {
-      body: vehicleRequest,
-    }
-  )
-  .get(
-    "/vehicles/:id",
-    ({ params: { id } }) => {
-      return service.getVehicleDetails(id);
-    },
-    {
-      body: vehicleRequest,
-    }
-  )
-  .patch("/vehicles/:id", ({ params }) => {
-    const { id } = params;
-    return service.markVehicleAsSold(id);
   })
-  .get("/", () => "Hello Elysia")
+  .use(VehicleController)
   .listen(3000);
-
-
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
