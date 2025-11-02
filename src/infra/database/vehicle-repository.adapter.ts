@@ -34,17 +34,13 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
     return vehicle[0];
   }
 
-  async updateVehicle(
-    id: string,
-    data: Partial<Vehicle>
-  ): Promise<Vehicle | null> {
+  async updateVehicle(id: string, data: Partial<Vehicle>): Promise<Vehicle> {
     const [updatedVehicle] = await db
       .update(vehicleSchemma)
       .set(data)
       .where(eq(vehicleSchemma.id, Number(id)))
       .returning();
 
-    if (!updatedVehicle) return null;
     return updatedVehicle;
   }
 }
