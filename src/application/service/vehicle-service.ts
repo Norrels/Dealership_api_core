@@ -1,5 +1,6 @@
 import { VehicleRepository } from "@/domain/ports/vehicle-repository";
-import { Vehicle } from "../domain/entities/vehicle";
+import { Vehicle } from "../../domain/entities/vehicle";
+import { CreateVehicleInput, UpdateVehicleInput } from "../dtos/vehicle.dto";
 
 export class VehicleService {
   constructor(private repository: VehicleRepository) {}
@@ -14,19 +15,24 @@ export class VehicleService {
     return vehicle;
   }
 
-  async createVehicle(data: Omit<Vehicle, "id">): Promise<Vehicle> {
+  async createVehicle(data: CreateVehicleInput): Promise<Vehicle> {
     const vehicleExists = await this.repository.getVehicleByVin(data.vin);
 
     if (vehicleExists) {
       throw new Error("Vehicle with this VIN already exists");
     }
 
-    return await this.repository.createVehicle(data);
+    const vehicleData: Omit<Vehicle, "id"> = {
+      ...data,
+      isSold: data.isSold ?? false,
+    };
+
+    return await this.repository.createVehicle(vehicleData);
   }
 
   async updateVehicle(
     id: string,
-    data: Partial<Omit<Vehicle, "id">>
+    data: UpdateVehicleInput
   ): Promise<Vehicle> {
     const vehicle = await this.repository.getVehicleById(id);
 
