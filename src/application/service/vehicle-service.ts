@@ -1,6 +1,7 @@
 import { VehicleRepository } from "@/domain/ports/vehicle-repository";
 import { Vehicle } from "../../domain/entities/vehicle";
-import { CreateVehicleInput, UpdateVehicleInput } from "../dtos/vehicle.dto";
+import { CreateVehicleInput, UpdateVehicleInput } from "../dtos/vehicle-dto";
+import { NotFoundError, ConflictError } from "../errors";
 
 export class VehicleService {
   constructor(private repository: VehicleRepository) {}
@@ -9,7 +10,7 @@ export class VehicleService {
     const vehicle = await this.repository.getVehicleById(id);
 
     if (!vehicle) {
-      throw new Error("Vehicle not found");
+      throw new NotFoundError(`Vehicle with ID ${id} not found`);
     }
 
     return vehicle;
@@ -19,7 +20,9 @@ export class VehicleService {
     const vehicleExists = await this.repository.getVehicleByVin(data.vin);
 
     if (vehicleExists) {
-      throw new Error("Vehicle with this VIN already exists");
+      throw new ConflictError(
+        `Vehicle with VIN ${data.vin} already exists in the system`
+      );
     }
 
     const vehicleData: Omit<Vehicle, "id"> = {
@@ -30,14 +33,20 @@ export class VehicleService {
     return await this.repository.createVehicle(vehicleData);
   }
 
-  async updateVehicle(
-    id: string,
-    data: UpdateVehicleInput
-  ): Promise<Vehicle> {
+  async updateVehicle(id: string, data: UpdateVehicleInput): Promise<Vehicle> {
     const vehicle = await this.repository.getVehicleById(id);
 
     if (!vehicle) {
-      throw new Error("Vehicle not found");
+      throw new NotFoundError(`Vehicle with ID ${id} not found`);
+    }
+
+    if (data.vin && data.vin !== vehicle.vin) {
+      const vinExists = await this.repository.getVehicleByVin(data.vin);
+      if (vinExists) {
+        throw new ConflictError(
+          `Vehicle with VIN ${data.vin} already exists in the system`
+        );
+      }
     }
 
     return await this.repository.updateVehicle(id, data);
@@ -47,11 +56,13 @@ export class VehicleService {
     const vehicle = await this.repository.getVehicleById(id);
 
     if (!vehicle) {
-      throw new Error("Vehicle not found");
+      throw new NotFoundError(`Vehicle with ID ${id} not found`);
     }
 
     if (vehicle.isSold) {
-      throw new Error("Vehicle is already marked as sold");
+      throw new ConflictError(
+        `Vehicle with ID ${id} is already marked as sold`
+      );
     }
 
     return await this.repository.updateVehicle(id, { isSold: true });
