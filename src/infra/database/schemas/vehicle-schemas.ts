@@ -1,12 +1,30 @@
-import { int, sqliteTable, text, real, integer } from "drizzle-orm/sqlite-core";
+import {
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+  integer,
+  numeric,
+  boolean,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { createId } from "@paralleldrive/cuid2";
 
-export const vehicleSchemma = sqliteTable("vehicle_table", {
-  id: int().primaryKey({ autoIncrement: true }),
-  make: text().notNull(),
-  model: text().notNull(),
-  year: int().notNull(),
-  vin: text().notNull(),
-  color: text().notNull(),
-  price: real().notNull(),
-  isSold: integer({ mode: "boolean" }).notNull(),
-});
+export const vehicleSchema = pgTable(
+  "vehicle_table",
+  {
+    id: text()
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    make: varchar({ length: 255 }).notNull(),
+    model: varchar().notNull(),
+    year: integer("year").notNull(),
+    vin: varchar().notNull(),
+    color: varchar().notNull(),
+    price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+    isSold: boolean("is_sold").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("vin_unique_idx").on(table.vin)]
+);
