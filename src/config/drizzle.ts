@@ -4,8 +4,8 @@ import { config } from "./env";
 export default defineConfig({
   out: "./src/infra/database/drizzle",
   schema: "./src/infra/database/schemas/*",
-  dialect: "postgresql",
+  dialect: "sqlite",
   dbCredentials: {
-    url: config.DATABASE_URL,
+    url: config.DB_FILE_NAME,
   },
 });
