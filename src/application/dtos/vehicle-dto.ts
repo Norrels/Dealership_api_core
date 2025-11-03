@@ -29,9 +29,9 @@ export const CreateVehicleDTO = t.Object({
     maxLength: 30,
     error: "Color must be between 2 and 30 characters",
   }),
-  price: t.Number({
-    minimum: 0.01,
-    error: "Price must be greater than 0",
+  price: t.String({
+    pattern: "^\\d+(\\.\\d{1,2})?$",
+    error: "Price must be a valid decimal number with up to 2 decimal places",
   }),
   isSold: t.Optional(t.Boolean()),
 });
@@ -74,29 +74,29 @@ export const UpdateVehicleDTO = t.Object({
     })
   ),
   price: t.Optional(
-    t.Number({
-      minimum: 0.01,
-      error: "Price must be greater than 0",
+    t.String({
+      pattern: "^\\d+(\\.\\d{1,2})?$",
+      error: "Price must be a valid decimal number with up to 2 decimal places",
     })
   ),
   isSold: t.Optional(t.Boolean()),
 });
 
 export const VehicleResponseDTO = t.Object({
-  id: t.Number(),
+  id: t.String(),
   make: t.String(),
   model: t.String(),
   year: t.Number(),
   vin: t.String(),
   color: t.String(),
-  price: t.Number(),
+  price: t.String(),
   isSold: t.Boolean(),
 });
 
 export const VehicleParamsDTO = t.Object({
   id: t.String({
-    pattern: "^[0-9]+$",
-    error: "ID must be a valid number",
+    minLength: 1,
+    error: "ID is required",
   }),
 });
 

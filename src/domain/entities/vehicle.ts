@@ -1,10 +1,10 @@
 export interface Vehicle {
-  id: number;
+  id: string;
   make: string;
   model: string;
   year: number;
   vin: string;
-  price: number;
+  price: string;
   color: string;
   isSold: boolean;
 }
