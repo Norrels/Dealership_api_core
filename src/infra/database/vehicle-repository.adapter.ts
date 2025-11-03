@@ -3,6 +3,7 @@ import { VehicleRepository } from "@/domain/ports/vehicle-repository";
 import { db } from ".";
 import { eq } from "drizzle-orm";
 import { vehicleSchema } from "./schemas/vehicle-schemas";
+import { logger } from "@/config/logger";
 
 export class VehicleRepositoryAdapter implements VehicleRepository {
   async getVehicleByVin(vin: string): Promise<Vehicle | null> {
@@ -21,7 +22,12 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       .where(eq(vehicleSchema.vin, vin))
       .limit(1);
 
-    if (vehicle.length === 0) return null;
+    if (vehicle.length === 0) {
+      logger.debug({ vin }, "Vehicle not found by VIN");
+      return null;
+    }
+
+    logger.debug({ vin, vehicleId: vehicle[0].id }, "Vehicle found by VIN");
     return vehicle[0] as Vehicle;
   }
   async createVehicle(data: Omit<Vehicle, "id">): Promise<Vehicle> {
@@ -29,6 +35,8 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       .insert(vehicleSchema)
       .values(data)
       .returning();
+
+    logger.debug({ vehicleId: newVehicle.id, vin: newVehicle.vin }, "Vehicle inserted successfully");
     return newVehicle;
   }
 
@@ -39,7 +47,12 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       .where(eq(vehicleSchema.id, id))
       .limit(1);
 
-    if (vehicle.length === 0) return null;
+    if (vehicle.length === 0) {
+      logger.debug({ vehicleId: id }, "Vehicle not found by ID");
+      return null;
+    }
+
+    logger.debug({ vehicleId: id, vin: vehicle[0].vin }, "Vehicle found by ID");
     return vehicle[0];
   }
 
@@ -50,6 +63,7 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       .where(eq(vehicleSchema.id, id))
       .returning();
 
+    logger.debug({ vehicleId: id, vin: updatedVehicle.vin }, "Vehicle updated in database");
     return updatedVehicle;
   }
 }
