@@ -7,8 +7,11 @@ import {
   numeric,
   boolean,
   uniqueIndex,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
+
+export const vehicleStatus = pgEnum("job_status", ["available", "sold"]);
 
 export const vehicleSchema = pgTable(
   "vehicle_table",
@@ -22,7 +25,7 @@ export const vehicleSchema = pgTable(
     vin: varchar().notNull(),
     color: varchar().notNull(),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-    isSold: boolean("is_sold").notNull(),
+    status: vehicleStatus("status").notNull().default("available"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
