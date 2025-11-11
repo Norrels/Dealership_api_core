@@ -1,4 +1,4 @@
-import { Vehicle } from "@/domain/entities/vehicle";
+import { Vehicle, VehicleStatus } from "@/domain/entities/vehicle";
 import { VehicleRepository } from "@/domain/ports/vehicle-repository";
 import { db } from ".";
 import { eq } from "drizzle-orm";
@@ -16,7 +16,7 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
         vin: vehicleSchema.vin,
         price: vehicleSchema.price,
         color: vehicleSchema.color,
-        isSold: vehicleSchema.isSold,
+        status: vehicleSchema.status,
       })
       .from(vehicleSchema)
       .where(eq(vehicleSchema.vin, vin))
@@ -63,7 +63,28 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       .where(eq(vehicleSchema.id, id))
       .returning();
 
+    if (!updatedVehicle) {
+      logger.debug({ vehicleId: id }, "No vehicle found to update");
+      throw new Error(`Vehicle with ID ${id} not found`);
+    }
+
     logger.debug({ vehicleId: id, vin: updatedVehicle.vin }, "Vehicle updated in database");
     return updatedVehicle;
+  }
+
+  async getAllVehicles(status?: VehicleStatus): Promise<Vehicle[]> {
+    let query = db.select().from(vehicleSchema);
+
+    if (status !== undefined) {
+      query = query.where(eq(vehicleSchema.status, status)) as typeof query;
+    }
+
+    const vehicles = await query;
+
+    logger.debug(
+      { count: vehicles.length, status },
+      "Retrieved vehicles from database"
+    );
+    return vehicles;
   }
 }
