@@ -1,11 +1,20 @@
 import { VehicleRepository } from "@/domain/ports/vehicle-repository";
-import { Vehicle } from "../../domain/entities/vehicle";
+import { Vehicle, VehicleStatus } from "../../domain/entities/vehicle";
 import { CreateVehicleInput, UpdateVehicleInput } from "../dtos/vehicle-dto";
 import { NotFoundError, ConflictError } from "../errors";
 import { logger } from "@/config/logger";
 
 export class VehicleService {
   constructor(private repository: VehicleRepository) {}
+
+  async getAllVehicles(status?: VehicleStatus): Promise<Vehicle[]> {
+    const vehicles = await this.repository.getAllVehicles(status);
+    logger.info(
+      { count: vehicles.length, status },
+      "Retrieved vehicles"
+    );
+    return vehicles;
+  }
 
   async getVehicleDetails(id: string): Promise<Vehicle> {
     const vehicle = await this.repository.getVehicleById(id);
@@ -31,7 +40,7 @@ export class VehicleService {
 
     const vehicleData: Omit<Vehicle, "id"> = {
       ...data,
-      isSold: data.isSold ?? false,
+      status: data.status ?? "available",
     };
 
     const vehicle = await this.repository.createVehicle(vehicleData);
@@ -72,16 +81,43 @@ export class VehicleService {
       throw new NotFoundError(`Vehicle with ID ${id} not found`);
     }
 
-    if (vehicle.isSold) {
+    if (vehicle.status === "sold") {
       logger.warn({ vehicleId: id, vin: vehicle.vin }, "Attempt to mark already sold vehicle");
       throw new ConflictError(
         `Vehicle with ID ${id} is already marked as sold`
       );
     }
 
-    const soldVehicle = await this.repository.updateVehicle(id, { isSold: true });
+    const soldVehicle = await this.repository.updateVehicle(id, { status: "sold" });
     logger.info({ vehicleId: id, vin: vehicle.vin }, "Vehicle marked as sold");
 
     return soldVehicle;
+  }
+
+  async changeVehicleStatus(id: string, newStatus: VehicleStatus): Promise<Vehicle> {
+    const vehicle = await this.repository.getVehicleById(id);
+
+    if (!vehicle) {
+      logger.warn({ vehicleId: id }, "Vehicle not found for status change");
+      throw new NotFoundError(`Vehicle with ID ${id} not found`);
+    }
+
+    if (vehicle.status === newStatus) {
+      logger.warn(
+        { vehicleId: id, vin: vehicle.vin, currentStatus: vehicle.status, newStatus },
+        "Attempt to set same status"
+      );
+      throw new ConflictError(
+        `Vehicle with ID ${id} already has status '${newStatus}'`
+      );
+    }
+
+    const updatedVehicle = await this.repository.updateVehicle(id, { status: newStatus });
+    logger.info(
+      { vehicleId: id, vin: vehicle.vin, oldStatus: vehicle.status, newStatus },
+      "Vehicle status changed via webhook"
+    );
+
+    return updatedVehicle;
   }
 }
