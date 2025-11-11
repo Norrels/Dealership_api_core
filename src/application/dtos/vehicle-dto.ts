@@ -33,7 +33,11 @@ export const CreateVehicleDTO = t.Object({
     pattern: "^\\d+(\\.\\d{1,2})?$",
     error: "Price must be a valid decimal number with up to 2 decimal places",
   }),
-  isSold: t.Optional(t.Boolean()),
+  status: t.Optional(
+    t.Union([t.Literal("available"), t.Literal("sold")], {
+      error: "Status must be either 'available' or 'sold'",
+    })
+  ),
 });
 
 export const UpdateVehicleDTO = t.Object({
@@ -79,7 +83,11 @@ export const UpdateVehicleDTO = t.Object({
       error: "Price must be a valid decimal number with up to 2 decimal places",
     })
   ),
-  isSold: t.Optional(t.Boolean()),
+  status: t.Optional(
+    t.Union([t.Literal("available"), t.Literal("sold")], {
+      error: "Status must be either 'available' or 'sold'",
+    })
+  ),
 });
 
 export const VehicleResponseDTO = t.Object({
@@ -90,7 +98,7 @@ export const VehicleResponseDTO = t.Object({
   vin: t.String(),
   color: t.String(),
   price: t.String(),
-  isSold: t.Boolean(),
+  status: t.Union([t.Literal("available"), t.Literal("sold")]),
 });
 
 export const VehicleParamsDTO = t.Object({
@@ -100,8 +108,30 @@ export const VehicleParamsDTO = t.Object({
   }),
 });
 
+export const VehicleQueryDTO = t.Object({
+  status: t.Optional(
+    t.Union([t.Literal("available"), t.Literal("sold")], {
+      error: "Status must be either 'available' or 'sold'",
+    })
+  ),
+});
+
+export const VehicleListResponseDTO = t.Array(VehicleResponseDTO);
+
+export const VehicleWebhookDTO = t.Object({
+  vehicleId: t.String({
+    minLength: 1,
+    error: "Vehicle ID is required",
+  }),
+  status: t.Union([t.Literal("available"), t.Literal("sold")], {
+    error: "Status must be either 'available' or 'sold'",
+  }),
+});
+
 export type CreateVehicleInput = typeof CreateVehicleDTO.static;
 
 export type UpdateVehicleInput = typeof UpdateVehicleDTO.static;
 
 export type VehicleResponse = typeof VehicleResponseDTO.static;
+
+export type VehicleWebhookInput = typeof VehicleWebhookDTO.static;
