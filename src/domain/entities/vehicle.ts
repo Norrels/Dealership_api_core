@@ -1,3 +1,5 @@
+export type VehicleStatus = "available" | "sold";
+
 export interface Vehicle {
   id: string;
   make: string;
@@ -6,5 +8,5 @@ export interface Vehicle {
   vin: string;
   price: string;
   color: string;
-  isSold: boolean;
+  status: VehicleStatus;
 }
