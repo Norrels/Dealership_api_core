@@ -18,7 +18,12 @@ describe("Testes de Integração - API de Veículos", () => {
         color: "Preto",
       });
 
-      const response = await makeRequest(app, "POST", "/api/v1/vehicles", novoVeiculo);
+      const response = await makeRequest(
+        app,
+        "POST",
+        "/api/v1/vehicles",
+        novoVeiculo
+      );
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -57,7 +62,12 @@ describe("Testes de Integração - API de Veículos", () => {
       });
 
       await makeRequest(app, "POST", "/api/v1/vehicles", veiculo);
-      const response = await makeRequest(app, "POST", "/api/v1/vehicles", veiculo);
+      const response = await makeRequest(
+        app,
+        "POST",
+        "/api/v1/vehicles",
+        veiculo
+      );
 
       expect(response.status).toBe(409);
       const data = await response.json();
@@ -150,7 +160,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "GET",
-        `/vehicles/${veiculoCriado.id}`
+        `/api/v1/vehicles/${veiculoCriado.id}`
       );
       const data = await response.json();
 
@@ -192,7 +202,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "GET",
-        `/vehicles/${veiculoCriado.id}`
+        `/api/v1/vehicles/${veiculoCriado.id}`
       );
       const data = await response.json();
 
@@ -221,7 +231,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "PUT",
-        `/vehicles/${veiculoCriado.id}`,
+        `/api/v1/vehicles/${veiculoCriado.id}`,
         dadosAtualizacao
       );
       const data = await response.json();
@@ -257,7 +267,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "PUT",
-        `/vehicles/${veiculoCriado.id}`,
+        `/api/v1/vehicles/${veiculoCriado.id}`,
         {
           vin: novoVin,
         }
@@ -284,7 +294,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "PUT",
-        `/vehicles/${veiculoCriado1.id}`,
+        `/api/v1/vehicles/${veiculoCriado1.id}`,
         {
           vin: veiculo2.vin,
         }
@@ -310,7 +320,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "PUT",
-        `/vehicles/${veiculoCriado.id}`,
+        `/api/v1/vehicles/${veiculoCriado.id}`,
         {
           color: "Vermelho",
         }
@@ -340,7 +350,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "PATCH",
-        `/vehicles/${veiculoCriado.id}/sold`
+        `/api/v1/vehicles/${veiculoCriado.id}/sold`
       );
       const data = await response.json();
 
@@ -373,7 +383,7 @@ describe("Testes de Integração - API de Veículos", () => {
       const response = await makeRequest(
         app,
         "PATCH",
-        `/vehicles/${veiculoCriado.id}/sold`
+        `/api/v1/vehicles/${veiculoCriado.id}/sold`
       );
       const data = await response.json();
 
@@ -393,12 +403,12 @@ describe("Testes de Integração - API de Veículos", () => {
       );
       const veiculoCriado = await createResponse.json();
 
-      await makeRequest(app, "PATCH", `/vehicles/${veiculoCriado.id}/sold`);
+      await makeRequest(app, "PATCH", `/api/v1/vehicles/${veiculoCriado.id}/sold`);
 
       const response = await makeRequest(
         app,
         "GET",
-        `/vehicles/${veiculoCriado.id}`
+        `/api/v1/vehicles/${veiculoCriado.id}`
       );
       const data = await response.json();
       expect(data.status).toBe("sold");
@@ -423,7 +433,12 @@ describe("Testes de Integração - API de Veículos", () => {
       const veiculo = VehicleFactory.createVehicleInput();
       await makeRequest(app, "POST", "/api/v1/vehicles", veiculo);
 
-      const response = await makeRequest(app, "POST", "/api/v1/vehicles", veiculo);
+      const response = await makeRequest(
+        app,
+        "POST",
+        "/api/v1/vehicles",
+        veiculo
+      );
       const data = await response.json();
 
       expect(response.status).toBe(409);
@@ -436,11 +451,16 @@ describe("Testes de Integração - API de Veículos", () => {
       const veiculo1 = VehicleFactory.createVehicleInput();
       const veiculo2 = VehicleFactory.createVehicleInput();
 
-      const create1 = await makeRequest(app, "POST", "/api/v1/vehicles", veiculo1);
+      const create1 = await makeRequest(
+        app,
+        "POST",
+        "/api/v1/vehicles",
+        veiculo1
+      );
       const v1 = await create1.json();
       await makeRequest(app, "POST", "/api/v1/vehicles", veiculo2);
 
-      const response = await makeRequest(app, "PUT", `/vehicles/${v1.id}`, {
+      const response = await makeRequest(app, "PUT", `/api/v1/vehicles/${v1.id}`, {
         vin: veiculo2.vin,
       });
 
