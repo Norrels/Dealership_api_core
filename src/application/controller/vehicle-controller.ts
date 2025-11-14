@@ -14,7 +14,7 @@ import {
 const repository = new VehicleRepositoryAdapter();
 const service = new VehicleService(repository);
 
-export const VehicleController = new Elysia({ prefix: "/vehicles" })
+export const VehicleController = new Elysia({ prefix: "api/v1/vehicles" })
   .get(
     "",
     async ({ query }) => {

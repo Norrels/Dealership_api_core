@@ -4,31 +4,12 @@ import { VehicleController } from "./application/controller/vehicle-controller";
 import { errorHandler } from "./application/middlewares/error-handler";
 import { requestLogger } from "./application/middlewares/logger";
 import { logger } from "./config/logger";
+import { openapiConfig } from "./config/openapi";
 
 const app = new Elysia()
   .use(requestLogger)
   .use(errorHandler)
-  .use(
-    openapi({
-      documentation: {
-        info: {
-          title: "Dealership Vehicle Management API",
-          version: "1.0.0",
-          description: "API for managing vehicles in a dealership system.",
-        },
-        tags: [
-          {
-            name: "Health",
-            description: "Health check endpoints",
-          },
-          {
-            name: "Vehicles",
-            description: "Endpoints for managing vehicles",
-          },
-        ],
-      },
-    })
-  )
+  .use(openapiConfig)
   .get("/health", () => "ok", {
     detail: {
       tags: ["Health"],

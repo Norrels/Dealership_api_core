@@ -81,12 +81,12 @@ Os serviços recebem suas dependências através de injeção no construtor, per
 
 ### Operações Principais
 
-- `POST /vehicles` - Criar um novo veículo
-- `GET /vehicles/:id` - Recuperar detalhes do veículo
-- `GET /vehicles` - Listar todos os veículos (com filtro opcional de status)
-- `PATCH /vehicles/:id` - Atualizar informações do veículo
-- `POST /vehicles/:id/sold` - Marcar veículo como vendido
-- `POST /webhook/vehicle-status` - Atualizar status do veículo via webhook
+- `POST /api/v1/vehicles` - Criar um novo veículo
+- `GET /api/v1/vehicles/:id` - Recuperar detalhes do veículo
+- `GET /api/v1/vehicles` - Listar todos os veículos (com filtro opcional de status)
+- `PATCH /api/v1/vehicles/:id` - Atualizar informações do veículo
+- `POST /api/v1/vehicles/:id/sold` - Marcar veículo como vendido
+- `POST /api/v1/webhook/vehicle-status` - Atualizar status do veículo via webhook
 
 ### Documentação OpenAPI
 
