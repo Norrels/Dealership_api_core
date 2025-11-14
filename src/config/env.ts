@@ -5,9 +5,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  LOG_LEVEL: z
-    .enum(["fatal", "error", "warn", "info", "debug", "trace"])
-    .optional(),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "silent"]).optional(),
 });
 
 export const config = envSchema.parse(process.env);

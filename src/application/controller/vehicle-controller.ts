@@ -1,4 +1,4 @@
-import { VehicleRepositoryAdapter } from "@/infra/database/vehicle-repository.adapter";
+import { VehicleRepositoryAdapter } from "@/infra/repository/vehicle-repository.adapter";
 import Elysia from "elysia";
 import { VehicleService } from "../service/vehicle-service";
 import {
