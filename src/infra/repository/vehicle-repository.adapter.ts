@@ -1,8 +1,8 @@
 import { Vehicle, VehicleStatus } from "@/domain/entities/vehicle";
 import { VehicleRepository } from "@/domain/ports/vehicle-repository";
-import { db } from ".";
+import { db } from "../database";
 import { eq } from "drizzle-orm";
-import { vehicleSchema } from "./schemas/vehicle-schemas";
+import { vehicleSchema } from "../database/schemas/vehicle-schemas";
 import { logger } from "@/config/logger";
 
 export class VehicleRepositoryAdapter implements VehicleRepository {
@@ -36,7 +36,10 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       .values(data)
       .returning();
 
-    logger.debug({ vehicleId: newVehicle.id, vin: newVehicle.vin }, "Vehicle inserted successfully");
+    logger.debug(
+      { vehicleId: newVehicle.id, vin: newVehicle.vin },
+      "Vehicle inserted successfully"
+    );
     return newVehicle;
   }
 
@@ -68,7 +71,10 @@ export class VehicleRepositoryAdapter implements VehicleRepository {
       throw new Error(`Vehicle with ID ${id} not found`);
     }
 
-    logger.debug({ vehicleId: id, vin: updatedVehicle.vin }, "Vehicle updated in database");
+    logger.debug(
+      { vehicleId: id, vin: updatedVehicle.vin },
+      "Vehicle updated in database"
+    );
     return updatedVehicle;
   }
 
