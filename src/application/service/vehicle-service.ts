@@ -1,5 +1,5 @@
 import { VehicleRepository } from "@/domain/ports/vehicle-repository";
-import { Vehicle, VehicleStatus } from "../../domain/entities/vehicle";
+import { Vehicle, VehicleStatus } from "@/domain/entities/vehicle";
 import { CreateVehicleInput, UpdateVehicleInput } from "../dtos/vehicle-dto";
 import { NotFoundError, ConflictError } from "../errors";
 import { logger } from "@/config/logger";

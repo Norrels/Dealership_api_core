@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { VehicleRepositoryAdapter } from "@/infra/repository/vehicle-repository.adapter";
-import { VehicleFactory } from "../../tests/factories/vehicle.factory";
-import { cleanDatabase } from "../../tests/setup";
+import { VehicleFactory } from "@/tests/factories/vehicle.factory.test";
+import { cleanDatabase } from "@/tests/setup.test";
 
 describe("VehicleRepositoryAdapter - Integration Tests", () => {
   let repository: VehicleRepositoryAdapter;
