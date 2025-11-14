@@ -7,6 +7,7 @@ import {
   numeric,
   boolean,
   uniqueIndex,
+  index,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
@@ -32,5 +33,8 @@ export const vehicleSchema = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("vin_unique_idx").on(table.vin)]
+  (table) => [
+    uniqueIndex("vin_unique_idx").on(table.vin),
+    index("status_idx").on(table.status),
+  ]
 );
