@@ -5,12 +5,10 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
-  workflow_dispatch:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'soat-4-core' }}
-  BUN_VERSION: "1.2.21"
 
 jobs:
   test:
@@ -40,14 +38,6 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
       - name: Install dependencies
         run: bun install
 
@@ -55,10 +45,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/soat_test
         run: bun run db:push
-
-      - name: Run linter (if available)
-        run: bun run lint || echo "No lint script found"
-        continue-on-error: true
 
       - name: Run tests
         env:
@@ -68,13 +54,6 @@ jobs:
           NODE_ENV: test
           LOG_LEVEL: silent
         run: bun run test:ci
-
-      - name: Upload coverage reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
 
   build-and-deploy:
     needs: test
@@ -97,9 +76,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Create ECR repository if it doesn't exist
         run: |
           aws ecr describe-repositories --repository-names $ECR_REPOSITORY 2>/dev/null || \
@@ -109,111 +85,29 @@ jobs:
             --image-scanning-configuration scanOnPush=true \
             --encryption-configuration encryptionType=AES256
 
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
-          tags: |
-            type=sha,prefix=,format=long
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
-      - name: Build and push Docker image
+      - name: Build, tag, and push Docker image
         id: build-image
-        uses: docker/build-push-action@v5
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:buildcache
-          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:buildcache,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-
-      - name: Output image details
         run: |
-          echo "image=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "### Docker Image Built Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:** \`latest\`, \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          # Build Docker image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
 
-      - name: Wait for image scan to complete
+          # Push images to ECR
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          # Output image URI for potential use in deployment
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Image scan results
         run: |
-          echo "Waiting for ECR image scan to complete..."
           aws ecr wait image-scan-complete \
             --repository-name $ECR_REPOSITORY \
-            --image-id imageTag=${{ github.sha }} \
-            --region ${{ env.AWS_REGION }} || true
+            --image-id imageTag=${{ github.sha }} || true
 
-      - name: Get image scan findings
-        id: scan-findings
-        run: |
-          echo "Retrieving scan findings..."
-          SCAN_FINDINGS=$(aws ecr describe-image-scan-findings \
+          aws ecr describe-image-scan-findings \
             --repository-name $ECR_REPOSITORY \
-            --image-id imageTag=${{ github.sha }} \
-            --region ${{ env.AWS_REGION }} 2>&1 || echo "{}")
-
-          echo "$SCAN_FINDINGS"
-
-          # Extract vulnerability counts
-          CRITICAL=$(echo "$SCAN_FINDINGS" | jq -r '.imageScanFindings.findingSeverityCounts.CRITICAL // 0')
-          HIGH=$(echo "$SCAN_FINDINGS" | jq -r '.imageScanFindings.findingSeverityCounts.HIGH // 0')
-          MEDIUM=$(echo "$SCAN_FINDINGS" | jq -r '.imageScanFindings.findingSeverityCounts.MEDIUM // 0')
-          LOW=$(echo "$SCAN_FINDINGS" | jq -r '.imageScanFindings.findingSeverityCounts.LOW // 0')
-
-          echo "### Security Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
-          echo "| High | $HIGH |" >> $GITHUB_STEP_SUMMARY
-          echo "| Medium | $MEDIUM |" >> $GITHUB_STEP_SUMMARY
-          echo "| Low | $LOW |" >> $GITHUB_STEP_SUMMARY
-
-          # Fail if critical vulnerabilities found (optional - uncomment to enforce)
-          # if [ "$CRITICAL" -gt 0 ]; then
-          #   echo "Critical vulnerabilities found! Failing build."
-          #   exit 1
-          # fi
-
-      - name: Tag image with environment
-        if: github.ref == 'refs/heads/master'
-        run: |
-          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
-
-          # Tag for production environment
-          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} $ECR_REGISTRY/$ECR_REPOSITORY:production
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:production
-
-          echo "Image tagged as 'production'" >> $GITHUB_STEP_SUMMARY
-
-      - name: Clean up old images
-        if: github.ref == 'refs/heads/master'
-        run: |
-          echo "Cleaning up old images (keeping last 10)..."
-          IMAGE_IDS=$(aws ecr list-images \
-            --repository-name $ECR_REPOSITORY \
-            --region ${{ env.AWS_REGION }} \
-            --query 'imageIds[?type(imageTag)!=`null`]|sort_by(@, &imageTag)|reverse(@)|[10:]' \
-            --output json)
-
-          if [ "$IMAGE_IDS" != "[]" ] && [ "$IMAGE_IDS" != "" ]; then
-            aws ecr batch-delete-image \
-              --repository-name $ECR_REPOSITORY \
-              --region ${{ env.AWS_REGION }} \
-              --image-ids "$IMAGE_IDS" || echo "No old images to clean"
-          else
-            echo "No images to clean up"
-          fi
+            --image-id imageTag=${{ github.sha }} || true
