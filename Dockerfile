@@ -1,4 +1,4 @@
-FROM oven/bun:1.2.21-alpine as builder
+FROM oven/bun:1.2.21-alpine AS builder
 
 WORKDIR /app
 
@@ -8,9 +8,8 @@ RUN bun install --frozen-lockfile --production
 
 COPY src ./src
 COPY tsconfig.json ./
-COPY drizzle.config.ts ./
 
-FROM oven/bun:1.2.21-alpine as production
+FROM oven/bun:1.2.21-alpine AS production
 
 RUN apk add --no-cache curl
 
@@ -20,7 +19,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 
 RUN addgroup -g 1001 -S bunuser && \
     adduser -S bunuser -u 1001 && \
